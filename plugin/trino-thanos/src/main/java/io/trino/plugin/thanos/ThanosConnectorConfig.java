@@ -13,15 +13,29 @@
  */
 package io.trino.plugin.thanos;
 
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
+import com.google.common.collect.ImmutableList;
+import com.google.inject.ConfigurationException;
+import com.google.inject.spi.Message;
+import io.airlift.configuration.Config;
+import io.airlift.configuration.ConfigDescription;
+import io.airlift.units.Duration;
+import io.airlift.units.MinDuration;
+
+import java.io.File;
 import java.net.URI;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class ThanosConnectorConfig
 {
     private URI thanosURI = URI.create("http://localhost:10901");
     private Duration queryChunkSizeDuration = new Duration(1, TimeUnit.DAYS);
     private Duration maxQueryRangeDuration = new Duration(21, TimeUnit.DAYS);
+    private Duration cacheDuration = new Duration(30, TimeUnit.SECONDS);
+    private File bearerTokenFile;
 
     @NotNull
     public URI getThanosURI()
@@ -29,5 +43,77 @@ public class ThanosConnectorConfig
         return thanosURI;
     }
 
-    
+    @Config("thanos.uri")
+    @ConfigDescription("Where to find Thanos Store host")
+    public ThanosConnectorConfig setThanosURI(URI thanosURI)
+    {
+        this.thanosURI = thanosURI;
+        return this;
+    }
+
+    @MinDuration("1ms")
+    public Duration getQueryChunkSizeDuration()
+    {
+        return queryChunkSizeDuration;
+    }
+
+    @Config("thanos.query.chunk.size.duration")
+    @ConfigDescription("The duration of each query to Thanos")
+    public ThanosConnectorConfig setQueryChunkSizeDuration(Duration queryChunkSizeDuration)
+    {
+        this.queryChunkSizeDuration = queryChunkSizeDuration;
+        return this;
+    }
+
+    @MinDuration("1ms")
+    public Duration getMaxQueryRangeDuration()
+    {
+        return maxQueryRangeDuration;
+    }
+
+    @Config("thanos.max.query.range.duration")
+    @ConfigDescription("Width of overall query to Thanos, will be divided into thanos.query.chunk.size.duration queries")
+    public ThanosConnectorConfig setMaxQueryRangeDuration(Duration maxQueryRangeDuration)
+    {
+        this.maxQueryRangeDuration = maxQueryRangeDuration;
+        return this;
+    }
+
+    @MinDuration("1s")
+    public Duration getCacheDuration()
+    {
+        return cacheDuration;
+    }
+
+    @Config("thanos.cache.ttl")
+    @ConfigDescription("How long values from this config file are cached")
+    public ThanosConnectorConfig setCacheDuration(Duration cacheConfigDuration)
+    {
+        this.cacheDuration = cacheConfigDuration;
+        return this;
+    }
+
+    public Optional<File> getBearerTokenFile()
+    {
+        return Optional.ofNullable(bearerTokenFile);
+    }
+
+    @Config("thanos.bearer.token.file")
+    @ConfigDescription("File holding bearer token if needed for access to Thanos")
+    public ThanosConnectorConfig setBearerTokenFile(File bearerTokenFile)
+    {
+        this.bearerTokenFile = bearerTokenFile;
+        return this;
+    }
+
+    @PostConstruct
+    public void checkConfig()
+    {
+        long maxQueryRangeDuration = (long) getMaxQueryRangeDuration().getValue(TimeUnit.SECONDS);
+        long queryChunkSizeDuration = (long) getQueryChunkSizeDuration().getValue(TimeUnit.SECONDS);
+        if (maxQueryRangeDuration < queryChunkSizeDuration) {
+            throw new ConfigurationException(ImmutableList.of(new Message("thanos.max.query.range.duration must be greater than thanos.query.chunk.size.duration")));
+        }
+    }
+
 }
