@@ -19,7 +19,16 @@ import com.google.common.collect.ImmutableSet;
 import io.trino.plugin.prometheus.PrometheusColumnHandle;
 import io.trino.plugin.prometheus.PrometheusTable;
 import io.trino.plugin.prometheus.PrometheusTableHandle;
-import io.trino.spi.connector.*;
+import io.trino.spi.connector.ColumnHandle;
+import io.trino.spi.connector.ColumnMetadata;
+import io.trino.spi.connector.ConnectorMetadata;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.ConnectorTableHandle;
+import io.trino.spi.connector.ConnectorTableMetadata;
+import io.trino.spi.connector.ConnectorTableProperties;
+import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.connector.SchemaTablePrefix;
+import io.trino.spi.connector.TableNotFoundException;
 
 import javax.inject.Inject;
 
@@ -159,12 +168,11 @@ public final class ThanosMetadata
         return new ConnectorTableProperties();
     }
 
-    @Override
-    public Optional<ConstraintApplicationResult<ConnectorTableHandle>> applyFilter(ConnectorSession session, ConnectorTableHandle handle, Constraint constraint)
-    {
-        PrometheusTableHandle tableHandle = ((PrometheusTableHandle) handle)
-                .withPredicate(constraint.getSummary());
-        return Optional.of(new ConstraintApplicationResult<>(tableHandle, constraint.getSummary(), false));
-    }
-
+    // @Override
+    // public Optional<ConstraintApplicationResult<ConnectorTableHandle>> applyFilter(ConnectorSession session, ConnectorTableHandle handle, Constraint constraint)
+    // {
+    //     PrometheusTableHandle tableHandle = ((PrometheusTableHandle) handle)
+    //             .withPredicate(constraint.getSummary());
+    //     return Optional.of(new ConstraintApplicationResult<>(tableHandle, constraint.getSummary(), false));
+    // }
 }

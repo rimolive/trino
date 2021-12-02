@@ -194,6 +194,12 @@
         </artifact>
     </artifactSet>
 
+    <artifactSet to="plugin/thanos">
+        <artifact id="${project.groupId}:trino-thanos:zip:${project.version}">
+            <unpack />
+        </artifact>
+    </artifactSet>
+
     <artifactSet to="plugin/tpch">
         <artifact id="${project.groupId}:trino-tpch:zip:${project.version}">
             <unpack />

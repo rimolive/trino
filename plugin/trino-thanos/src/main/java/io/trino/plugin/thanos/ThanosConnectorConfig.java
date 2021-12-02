@@ -13,20 +13,14 @@
  */
 package io.trino.plugin.thanos;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-
-import com.google.common.collect.ImmutableList;
-import com.google.inject.ConfigurationException;
-import com.google.inject.spi.Message;
 import io.airlift.configuration.Config;
 import io.airlift.configuration.ConfigDescription;
 import io.airlift.units.Duration;
 import io.airlift.units.MinDuration;
 
-import java.io.File;
+import javax.validation.constraints.NotNull;
+
 import java.net.URI;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class ThanosConnectorConfig
@@ -35,7 +29,6 @@ public class ThanosConnectorConfig
     private Duration queryChunkSizeDuration = new Duration(1, TimeUnit.DAYS);
     private Duration maxQueryRangeDuration = new Duration(21, TimeUnit.DAYS);
     private Duration cacheDuration = new Duration(30, TimeUnit.SECONDS);
-    private File bearerTokenFile;
 
     @NotNull
     public URI getThanosURI()
@@ -92,28 +85,4 @@ public class ThanosConnectorConfig
         this.cacheDuration = cacheConfigDuration;
         return this;
     }
-
-    public Optional<File> getBearerTokenFile()
-    {
-        return Optional.ofNullable(bearerTokenFile);
-    }
-
-    @Config("thanos.bearer.token.file")
-    @ConfigDescription("File holding bearer token if needed for access to Thanos")
-    public ThanosConnectorConfig setBearerTokenFile(File bearerTokenFile)
-    {
-        this.bearerTokenFile = bearerTokenFile;
-        return this;
-    }
-
-    @PostConstruct
-    public void checkConfig()
-    {
-        long maxQueryRangeDuration = (long) getMaxQueryRangeDuration().getValue(TimeUnit.SECONDS);
-        long queryChunkSizeDuration = (long) getQueryChunkSizeDuration().getValue(TimeUnit.SECONDS);
-        if (maxQueryRangeDuration < queryChunkSizeDuration) {
-            throw new ConfigurationException(ImmutableList.of(new Message("thanos.max.query.range.duration must be greater than thanos.query.chunk.size.duration")));
-        }
-    }
-
 }
